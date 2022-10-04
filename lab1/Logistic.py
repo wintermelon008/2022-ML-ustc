@@ -37,16 +37,12 @@ class LogisticRegression:
 
         m, n = X.shape
         result = []
-
+        temp = np.dot(X, self.w)
         for i in range(m):
-            x_i = X[i].reshape(-1, 1)
-            output_i = np.dot(self.w.T, x_i)
-            p1_i =  self.sigmoid(output_i)
-            if p1_i > 0.5:
+            if temp[i] >= 0.5:
                 result.append(1)
             else:
                 result.append(0)
-
         
         return result
         
