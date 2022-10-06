@@ -13,7 +13,7 @@ class LogisticRegression:
         """
         Fit the regression coefficients via gradient descent or other methods 
         """
-        m, n = X.shape      # X is m rows n colums
+        m, n = X.shape    
 
         self.w = np.random.uniform(low=0.0, high=1.0, size=n).reshape(-1, 1)
         loss_list = []
@@ -21,12 +21,12 @@ class LogisticRegression:
         for i in range(int(max_iter)):
             temp = np.dot(X, self.w)
             loss = np.dot(-y.T, temp) + np.log(1 + np.exp(temp)).sum()
-            loss_list.append(loss)
+            loss_list.append(loss[0][0])
             self.w -= (lr * np.dot(X.T, self.sigmoid(temp) - y))
             if i > 2 and abs(loss_list[i] - loss_list[i - 1]) < tol:
                 break
         
-        return loss_list
+        return i, loss_list
 
         
     def predict(self, X):
