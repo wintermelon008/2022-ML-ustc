@@ -2,6 +2,23 @@
 
 **PB20111699 吴骏东**
 
+**2022.10.8**
+
+
+
+### 模型说明
+
+目标函数为
+$$
+l(w)=\sum_{i=1}^m(-y_i\hat{w}\hat{x_i}+\log{(1+e^{\hat{w}^T\hat{x_i}}})) + \gamma_1||w||_1+\gamma_2||w||_2^2
+$$
+其中 $\gamma_1,\ \gamma_2$ 为 L1、L2 正则化的参数。二者至少有一个为 0。于是有
+$$
+\nabla l(\hat{w})=X^T\left(\frac{1}{1+e^{X\hat{w}}}-y\right)+\gamma_1\text{sign}(\hat{w})+2\gamma_2\hat{w}\\
+\nabla^2l(\hat{w})=X^T\text{diag}(p_1(1-p_1))X+2\gamma_2I_n
+$$
+
+
 
 
 ### 参数调整
@@ -109,6 +126,10 @@
 
 ### 最终模型
 
-采用梯度下降法，删除特征 'Gender' 、 'Married'、 'Education' 、 'LoanAmount'，取 $\alpha = 0.7,\quad lr=0.0005,\quad tol=1e^{-2}$，得到模型的平均准确率为 0.83002。某一次训练的损失曲线如下：
+采用梯度下降法，删除特征 'Gender' 、 'Married'、 'Education' 、 'LoanAmount'，取 $\alpha = 0.7,\quad lr=0.0005,\quad tol=1e^{-2},\quad \gamma=1$，采用梯度下降法得到模型的平均准确率为 0.83002。取随机数种子为 42675，得到最优模型准确率为 0.859，对应的损失曲线如下：
 
-<img src="\output.png" alt="image-20221007160528637" style="zoom: 80%;" />
+<img src="output1.png" alt="image-20221008203606342" style="zoom: 80%;" />
+
+牛顿迭代法的曲线如下：
+
+<img src="output2.png" alt="image-20221008203759364" style="zoom:80%;" />

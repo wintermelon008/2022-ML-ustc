@@ -1,72 +1,44 @@
-## Machine Learning Lab1
+#### 目录结构
 
-Logistic Regression
+```
+--Loan.ipynb
 
-By Zhang Yongting 2022.9.27
+--Logistic.py
 
-### 1 Logistic Regression
+--ReadMe.md
 
-You can refer to the class notes(Part 3)
+--Report.pdf
+```
 
-### 2 Data
 
-[Loan Data Set | Kaggle](https://www.kaggle.com/datasets/burak3ergun/loan-data-set)
 
-### 3 Tasks & Requirements
+**实验中涉及到的外部库：**
 
-#### 3.1 Tasks
+**pandas、random、numpy、 matplotlib、 pylab** 
 
-If you choose the frame we supply
 
-In `Logistic.py`, write your own Logistic Regression class
 
-In `Load.ipynb`
+#### Logistic.py
 
-1. Deal with NULL rows, you can either choose to drop them or replace them with mean or other value 
-2. Encode categorical features
-3. Split the dataset into X_train, X_test, y_train, y_test, also you can then use normalization or any other methods you want
-4. Train your model and plot the loss curve of training
-5. Compare the accuracy(or other metrics you want) of test data with different parameters you train with, i.e. learning rate, regularization methods and parameters .etc
+```python
+def __init__(self, penalty="l2", gamma=1, random_seed: int = -1)
+    penalty: 正则化方式的种类，默认 L2
+    gamma: 正则化参数，默认 1
+    random_seed: 随机数种子，为 -1 则代表不固定，否则固定随机数种子。默认 -1
+```
 
-If you choose to write this project from scratch, you need todo
+```python
+def fit(self, X: np.ndarray, y: np.ndarray , lr=0.001, tol=1e-7, max_iter=1e7, method='gradient')
+	X: 训练集特征矩阵
+    y: 训练集分类矩阵
+    lr: 学习率
+    tol: 迭代阈值
+    max_iter: 最大迭代次数
+    method: 迭代方法，可选梯度下降 'gradient' 和牛顿迭代 'newton'
+```
 
-1. Data cleaning, Data encoding, or any other process methods
-2. Write your own Logistic Regression method in `Logistic.py`and train with`Load` dataset
-3. Compare the accuracy(or other metrics you want) of test data with different parameters you train with, i.e. learning rate, regularization methods and parameters .etc
 
-#### 3.2 Requirements
 
-- **Do not** use sklearn or other machine learning library,  you are only permitted with numpy, pandas, matplotlib, and [Standard Library](https://docs.python.org/3/library/index.html), you are required to **write this project from scratch.**
-- You are allowed to discuss with other students, but you are *not allowed to plagiarize the code**, we will use automatic system to determine the similarity of your programs, once detected, both of you will get **zero** mark for this project.
+#### Loan.ipynb
 
-### 4 Submission
-
-- Report
-
-  - The Loss curve of one training process
-
-  - The comparation table of different parameters
-
-  - The best accuracy of test data
-
-- Submit a .zip file with following contents(You don't need to submit `loan.csv`)
-
-  --Loan.ipynb
-
-  --Logistic.py
-
-  --ReadMe.md
-
-  --Report.pdf
-
-- Please name your file as `LAB1_PBXXXXXXXX.zip`, **for wrongly named file, we will not count the mark**
-
-- Sent an email to  ml_2022_fall@163.com with your zip file before deadline
-
-- **Deadline:  2022.10.16 23:59:59** (Considering the National Day)
-
-- For late submission, please refer to [this](https://gitee.com/Sqrti/ml_2022_f#%E4%B8%80%E5%85%B3%E4%BA%8E%E8%AF%BE%E7%A8%8B)
-
-  
-
-  
+直接顺序运行即可。
