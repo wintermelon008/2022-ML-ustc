@@ -2,7 +2,7 @@ import numpy as np
 
 class LogisticRegression:
 
-    def __init__(self, penalty="l2", gamma=0, fit_intercept=True, random_seed: int = -1, reg_param = 0.01):
+    def __init__(self, penalty="l2", gamma=1, random_seed: int = -1):
         regularization_list = ['l0', 'l1', 'l2']
         err_msg = "penalty must be 'l0', 'l1' or 'l2', but got: {}".format(penalty)
         assert penalty in regularization_list, err_msg
@@ -18,15 +18,18 @@ class LogisticRegression:
         self.reg_2param = 0
 
         if penalty == 'l1':
-            self.reg_1param = reg_param
+            self.reg_1param = gamma
         elif penalty == 'l2':
-            self.reg_2param = reg_param
+            self.reg_2param = gamma
 
 
 
     def sigmoid(self, x):
         """The logistic sigmoid function"""
-        return 1.0 / (1 + np.exp(-x))
+        if x.min() < -500:
+            return np.exp(x) / (1 + np.exp(x))
+        else:
+            return 1.0 / (1 + np.exp(-x))
 
 
     def fit(self, X: np.ndarray, y: np.ndarray , lr=0.001, tol=1e-7, max_iter=1e7, method='gradient'):
@@ -35,6 +38,11 @@ class LogisticRegression:
         """
         assert method in ['gradient', 'newton'], "method must be 'gradient' or 'newton', but got {}".format(method)
 
+        m, n = X.shape 
+        if self.ifset_random_seed:
+            np.random.seed(self.random_seed)
+        self.w = np.random.uniform(low=0.0, high=1.0, size=n).reshape(-1, 1)
+
         if method == 'gradient':
             return self.gradient(X, y, lr, tol, max_iter)
         elif method == 'newton':
@@ -42,12 +50,8 @@ class LogisticRegression:
 
 
 
-    def gradient(self, X: np.ndarray, y: np.ndarray , lr=0.001, tol=1e-7, max_iter=1e7):
-        
+    def gradient(self, X: np.ndarray, y: np.ndarray , lr, tol, max_iter):
         m, n = X.shape    
-        if self.ifset_random_seed:
-            np.random.seed(self.random_seed)
-        self.w = np.random.uniform(low=0.0, high=1.0, size=n).reshape(-1, 1)
         loss_list = []
 
         for i in range(int(max_iter)):
@@ -66,11 +70,8 @@ class LogisticRegression:
 
     
 
-    def newton(self, X: np.ndarray, y: np.ndarray , lr=0.001, tol=1e-7, max_iter=1e7):
+    def newton(self, X: np.ndarray, y: np.ndarray , lr, tol, max_iter):
         m, n = X.shape
-        if self.ifset_random_seed:
-            np.random.seed(self.random_seed)
-        self.w = np.random.uniform(low=0.0, high=1.0, size=n).reshape(-1, 1)
         loss_list = []
 
         for i in range(int(max_iter)):
