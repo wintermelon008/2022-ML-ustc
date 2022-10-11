@@ -81,7 +81,7 @@ $$
 
 
 
-#### 对数回归曲线参数 lr
+#### 学习率 lr
 
 不删除额外特征，取 $\alpha=0.7,\quad tol=1e^{-7}$
 
@@ -126,7 +126,7 @@ $$
 
 ### 最终模型
 
-采用梯度下降法，删除特征 'Gender' 、 'Married'、 'Education' 、 'LoanAmount'，取 $\alpha = 0.7,\quad lr=0.0005,\quad tol=1e^{-2},\quad \gamma=1$，采用梯度下降法得到模型的平均准确率为 0.83002。取随机数种子为 42675，得到最优模型准确率为 0.859，对应的损失曲线如下：
+采用梯度下降法，删除特征 'Gender' 、 'Married'、 'Education' 、 'LoanAmount'，取 $\alpha = 0.7,\quad lr=0.0005,\quad tol=1e^{-2},\quad \gamma=1$，采用梯度下降法得到模型的平均准确率为 0.82972。取随机数种子为 42675，得到最优模型准确率为 0.859，对应的损失曲线如下：
 
 <img src="output1.png" alt="image-20221008203606342" style="zoom: 80%;" />
 

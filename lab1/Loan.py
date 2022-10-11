@@ -25,7 +25,7 @@ df['Loan_Status'] = df['Loan_Status'].map({'Y': 1, 'N': 0})
 df.drop(df.columns[[0, 1, 2, 4, 8]], axis=1, inplace=True)
 
 seed = -1
-N = 500010
+N = 10000010
 
 # 如果为 -1 则不设置随机数种子
 
@@ -82,10 +82,6 @@ while seed < N:
     except:
         print(1)
         times, loss = lr.fit(X_train, y_train, lr=0.0005, tol=1e-2)
-        
-    
-
-    
         
 
     pred = lr.predict(X_test)
