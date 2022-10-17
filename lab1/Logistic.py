@@ -42,6 +42,9 @@ class LogisticRegression:
         if self.ifset_random_seed:
             np.random.seed(self.random_seed)
         self.w = np.random.uniform(low=0.0, high=1.0, size=n).reshape(-1, 1)
+        # self.w = (np.ones(n) * 10).reshape(-1, 1)
+        # print(self.w)
+
 
         if method == 'gradient':
             return self.gradient(X, y, lr, tol, max_iter)

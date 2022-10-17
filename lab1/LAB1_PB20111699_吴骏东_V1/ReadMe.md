@@ -20,6 +20,8 @@
 
 #### Logistic.py
 
+实现内容包括：随机种子生成、牛顿迭代法与梯度下降法、 L1 & L2 正则化选择。
+
 ```python
 def __init__(self, penalty="l2", gamma=1, random_seed: int = -1)
     penalty: 正则化方式的种类，默认 L2
@@ -40,5 +42,7 @@ def fit(self, X: np.ndarray, y: np.ndarray , lr=0.001, tol=1e-7, max_iter=1e7, m
 
 
 #### Loan.ipynb
+
+实现内容包括：随机空缺填充、随机划分、函数化图形绘制。
 
 直接顺序运行即可。
