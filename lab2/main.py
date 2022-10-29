@@ -27,7 +27,7 @@ def generate_data(dim = 10, num = 100, random_seed = -1):
             mislabel += 1
     return x, label, mislabel/num
 
-X_data, y_data, mislabel = generate_data(dim=5, num=100) 
+X_data, y_data, mislabel = generate_data(dim=10, num=500) 
 
 # split data
 def random_Split_data(X: np.ndarray, y:np.ndarray, rate = 0.7, random_seed: int = -1):
@@ -67,6 +67,10 @@ def seconde_max(lt):
     return d[y]  
 
 
+# you can do anything necessary about the model
+from numpy import double
+
+
 class SVM2:
     def __init__(self, X:np.ndarray, y:np.ndarray):
         """
@@ -75,49 +79,17 @@ class SVM2:
         m, _ = X.shape
         self.X = X
         self.y = y
-        # self.alpha = self.w = np.random.uniform(low=-0.5, high=0.5, size=m).reshape(-1, 1)
+        self.K = self.X @ self.X.T
+        
         self.alpha = np.zeros((m, 1))
-        self.b = 0
+        self.b = np.random.uniform(low=0.0, high=1.0, size=1)
         self.err = np.zeros((m, 1))
         self._update_e()
 
-    
-    def _x(self, X_index):
-        return self.X[X_index, :]
-    
-    def _K(self, X1_index, X2_index = -1):
-        if X2_index == -1:
-            X2_index = X1_index
-        return (self.X[X1_index, :].T @ self.X[X2_index, :])
-
-    def _y(self, y_index):
-        return (self.y[y_index, :])[0]
-
-    def _a(self, a_index):
-        return (self.alpha[a_index, :])[0]
-
-    def _e(self, e_index):
-        return (self.err[e_index, :])[0]
-
-    def _func(self, X_index):
-        alpha_y = self.alpha * self.y
-        return (alpha_y.T @ self.X @ self._x(X_index).T)[0] + self.b
+       
         
-    def _error(self, X_index):
-        return self._func(X_index) - self._y(X_index)
 
-
-    def _cut(self, a1_index, a2_index, a2_uncut, gamma) -> (float | bool):
-        if self._y(a1_index) != self._y(a2_index):
-            low = max(0, self._a(a2_index) - self._a(a1_index))
-            high = min(gamma, gamma + self._a(a2_index) - self._a(a1_index))
-        else:
-            low = max(0, self._a(a2_index) + self._a(a1_index) - gamma)
-            high = min(gamma, self._a(a2_index) + self._a(a1_index))
-
-        if high == low:
-            return False
-        
+    def _cut(self, low, high, a2_uncut):
         if a2_uncut > high:
             return high
         elif a2_uncut < low:
@@ -127,26 +99,39 @@ class SVM2:
 
     def _update_alpha(self, a1_index, a2_index, gamma):
 
-        eta = self._K(a1_index) + self._K(a2_index) - 2 * self._K(a1_index, a2_index)
+        eta = self.K[a1_index][a1_index] + self.K[a2_index][a2_index] - 2 * self.K[a1_index, a2_index]
+        alpha1_old = self.alpha[a1_index, :][0]
+        alpha2_old = self.alpha[a2_index, :][0]
+        y1 = self.y[a1_index, :][0]
+        y2 = self.y[a2_index, :][0]
+        err1 = self.err[a1_index, :][0]
+        err2 = self.err[a2_index, :][0]
 
         if eta > 0:
-            a2_uncut = self._a(a2_index) + self._y(a2_index) * (self._e(a1_index) - self._e(a2_index)) / eta
+            a2_uncut = alpha2_old + y2 * (err1 - err2) / eta
         else:
             # print("Eta <= 0")
             return False
         
-        alpha2_new = self._cut(a1_index, a2_index, a2_uncut, gamma)
-        if (alpha2_new == False):
+        if y1 != y2:
+            low = max(0, alpha2_old - alpha1_old)
+            high = min(gamma, gamma + alpha2_old - alpha1_old)
+        else:
+            low = max(0, alpha2_old + alpha1_old - gamma)
+            high = min(gamma, alpha2_old + alpha1_old)
+
+        if low > high:
             # print("Low == High")
             return False
+
+        alpha2_new = self._cut(low, high, a2_uncut)
         
-        if (abs(self._a(a2_index) - alpha2_new) <1e-3):
+
+        if (abs(alpha2_old - alpha2_new) < 1e-3):
             # print("Alpha2 moves too slow")
             return False
 
-        alpha1_new = self._a(a1_index) + self._y(a1_index) * \
-                                  self._y(a2_index) * (self._a(a2_index) - \
-                                  alpha2_new)
+        alpha1_new = alpha1_old + y1 * y2 * (alpha2_old - alpha2_new)
         self._update_b(a1_index, a2_index, alpha1_new, alpha2_new, gamma)
 
         self.alpha[a1_index] = alpha1_new
@@ -158,21 +143,19 @@ class SVM2:
 
 
     def _update_b(self, a1_index, a2_index, a1_new, a2_new, gamma):
-        alpha_1 = self._a(a1_index) 
-        alpha_2 = self._a(a2_index) 
+        alpha_1 = self.alpha[a1_index, :][0] 
+        alpha_2 = self.alpha[a2_index, :][0] 
+        y1 = self.y[a1_index, :][0]
+        y2 = self.y[a2_index, :][0]
+        err1 = self.err[a1_index, :][0]
+        err2 = self.err[a2_index, :][0]
 
-        b1 = -self._e(a1_index) - \
-                self._y(a1_index) * self._K(a1_index) * (a1_new - alpha_1) - \
-                self._y(a2_index) * self._K(a2_index, a1_index) * (a2_new - alpha_2) + \
-                self.b
+        b1 = -err1 - y1 * self.K[a1_index][a1_index] * (a1_new - alpha_1) - y2 * self.K[a2_index, a1_index] * (a2_new - alpha_2) + self.b
         if 0 < alpha_1 < gamma:
             self.b = b1
             return
       
-        b2 = -self._e(a2_index) - \
-                self._y(a1_index) * self._K(a1_index, a2_index) * (a1_new - alpha_1) - \
-                self._y(a2_index) * self._K(a2_index) * (a2_new - alpha_2) + \
-                self.b
+        b2 = -err2 - y1 * self.K[a1_index, a2_index] * (a1_new - alpha_1) - y2 * self.K[a2_index][a2_index] * (a2_new - alpha_2) + self.b
         if 0 < alpha_2 < gamma:
             self.b = b2
             return
@@ -180,15 +163,10 @@ class SVM2:
         self.b = 0.5 * (b1 + b2)
         return
 
+
     def _update_e(self):
-        m, _ = self.X.shape
-        for i in range(m):
-            self.err[i] = self._error(i) 
-
-
-
-
-
+        alpha_y = self.alpha * self.y
+        self.err = self.K @ alpha_y + self.b - self.y
 
 
     def fit(self, gamma = 1, lr = 0.01, tol=1, max_times = 100, silent = True, epslion = 0):
@@ -200,80 +178,75 @@ class SVM2:
         loss_list = []
         times = 0
         
-
         while times < max_times:
             alpha_y = self.alpha * self.y
             loss = self.alpha.sum() - 0.5 * (alpha_y.T @ self.X @ self.X.T @ alpha_y)[0][0]
 
             i_list = []
-            i_dict = {}
 
             for i in range(m):
-                if (self._a(i) < gamma and self._e(i) < -epslion) or \
-                   (self._a(i) > 0 and self._e(i) > epslion):
-                    # val = abs(self._e(i) - epslion)
-                    # i_list.append(val)
-                    # i_dict[val] = i
-                # temp = self._y(i) * self._func(i)
-                # if self._a(i) <= 0 and temp < 1 - epslion:
-                #     val = 1 - epslion - temp
-                #     i_list.append(val)
-                #     i_dict[val] = i
-
-                # elif self._a(i) >= gamma and temp > 1 + epslion:
-                #     val = 1 + epslion - temp
-                #     i_list.append(val)
-                #     i_dict[val] = i
-
-                # elif abs(temp - 1) > epslion:
-                #     val = abs(temp - 1) - epslion
-                #     i_list.append(val)
-                #     i_dict[val] = i
+                alpha_i = self.alpha[i, :][0]
+                err_i = self.err[i, :][0]
+                if (0 < alpha_i < gamma and abs(err_i - 1) > epslion):
+                    val = (abs(err_i) - epslion) * 10
+                    i_list.append((val, i))
+                elif alpha_i == 0 and err_i < 1 - epslion:
+                    val = - err_i + 1 - epslion
+                    i_list.append((val, i))
+                elif alpha_i >= gamma and err_i > 1 + epslion:
+                    val = err_i - 1 - epslion
+                    i_list.append((val, i))
 
 
-            # i_list.sort()
-            # while len(i_list) > 0:
-                # a1 = i_dict[i_list.pop()]
-                    a1 = i
-                    e1 = self._e(a1)
+            if times > 2 and len(i_list) == 0:
+                loss_list.append(loss)
+                break
 
-                    err_dict = []
-                    err_list = []
-                    for i in self.err.tolist():
-                        err_list.append(i[0])
-                    # print(err_list)
-                    for index, value in enumerate(err_list):
-                        err_dict.append((value, index))
-                    err_dict.sort(key=takefirst)
-                    k = 0
-        
-                    if e1 > 0:
-                        while k < m:
-                            a2 = err_dict[k][1]
-                            if a1 != a2 and self._update_alpha(a1, a2, gamma):
-                                break
-                            k += 1
-                    else:
-                        while k < m:
-                            a2 = err_dict[-1 - k][1]
-                            if a1 != a2 and self._update_alpha(a1, a2, gamma):
-                                break
-                            k += 1
+            i_list.sort(key = takefirst)
 
-                    if k == m:
-                        continue  # change i
-                    else:
-                        break
+            while len(i_list) > 0:
+                _, a1 = i_list.pop()
+                e1 = self.err[a1, :][0]
+
+                err_dict = []
+                err_list = []
+
+                for i in self.err.tolist():
+                    err_list.append(i[0])
+                # print(err_list)
+                for index, value in enumerate(err_list):
+                    err_dict.append((value, index))
+                err_dict.sort(key=takefirst)
+
+                k = 0
+                if e1 > 0:
+                    while k < m:
+                        a2 = err_dict[k][1]
+                        if a1 != a2 and self._update_alpha(a1, a2, gamma):
+                            break
+                        k += 1
+                else:
+                    while k < m:
+                        a2 = err_dict[-1 - k][1]
+                        if a1 != a2 and self._update_alpha(a1, a2, gamma):
+                            break
+                        k += 1
+
+                if k == m:
+                    continue  # change i
+                else:
+                    break
             
 
-            if times >= 2 and (abs(loss_list[-1] - loss) < tol or len(i_list) == 0):
+            if times >= 2 and abs(loss_list[-1] - loss) < tol:
                 loss_list.append(loss)
                 break
 
             loss_list.append(loss)
             times += 1
 
-
+        if times == max_times:
+            times -= 1
         return loss_list, times
 
 
@@ -295,13 +268,16 @@ class SVM2:
                 ans.append(-1)
         
         return np.array(ans).reshape(-1, 1)
+
+def takefirst(elm):
+    return elm[0]
         
 
 def takefirst(elm):
     return elm[0]
 
 model2 = SVM2(X_train, y_train)
-loss, times = model2.fit(gamma = 0.1, tol = 1e-7, max_times=500, epslion=0.01)
+loss, times = model2.fit(gamma = 0.1, tol = 1e-7, max_times=5000, epslion=0.1)
 # print(model2.alpha)
 # print(loss)
 # print(model2.b)
