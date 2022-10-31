@@ -1,6 +1,10 @@
-**机器学习概论实验报告**
+# 机器学习概论实验报告
 
 **PB20111699 吴骏东**
+
+**2022.10.30**
+
+​		在本次的实验中，我们需要自己实现支持向量机这一机器学习基本任务模型。本文将从算法原理、代码实现、性能分析等方面展开。如果对于其中部分内容有疑问或者有其他改进意见，欢迎提出 issue 或直接练习作者。
 
 
 
@@ -12,16 +16,21 @@
 
 <img src="./pics/p1.png" alt="image-20221024165502163" style="zoom:50%;" />
 
-​		对于二分类样本集合 $D\in(R^n\times\{-1,1\})^m$ ，假设超平面能够将所有训练样本正确分类，即对于 $(x_i,\ y_i)\in D$，有 $y_i(w^Tx_i+b)>0$。我们定义超平面关于样本点 $(x_i,\ y_i)$ 的几何间隔为
+​		如上图所示，对于二分类样本集合 $D\in(R^n\times\{-1,1\})^m$ ，假设超平面能够将所有训练样本正确分类，即对于 $\forall (x_i,\ y_i)\in D$，有 $y_i(w^Tx_i+b)>0$。我们定义超平面关于样本点 $(x_i,\ y_i)$ 的几何间隔为
 $$
-\gamma_i = y_i\left(\frac{w}{|w|}\cdot x_i+\frac{b}{|w|}\right)
+\gamma_i = y_id_i=y_i\left(\frac{w^T\cdot x_i+b}{||w||}\right)
 $$
-则支持向量机的优化问题为
+我们希望寻找一个最优的超平面，使得所有样本点到该超平面距离“最大”。则支持向量机的优化问题可以表示为
 $$
 \max_{w,b}\gamma\\
-\text{s.t. }\gamma_i \ge1, i=1,2,\cdots,m
+\text{s.t. }\gamma_i \ge\gamma, i=1,2,\cdots,m
 $$
-不失一般性，令 $w=\frac{w}{|w|\gamma},\ b=\frac{b}{|w|\gamma}$， 则上面的问题等价于
+不失一般性，令 $w=\frac{w}{||w||\gamma},\ b=\frac{b}{||w||\gamma}$， 则上面的问题等价于
+$$
+\max_{w,b}\gamma\\\\
+\text{s.t. }y_i(wx_i+b)\ge1,\ i = 1,2,\cdots,m
+$$
+由于 $\max\gamma\Leftrightarrow\max\frac{1}{||w||}\Leftrightarrow\min\frac{1}{2}||w||^2$，所以最终我们可以将 SVM 的最大分割超平面问题转化为如下问题
 $$
 \min_{w,b}\frac{1}{2}||w||^2\\
 \text{s.t. }y_i(wx_i+b)\ge1,\ i = 1,2,\cdots,m
@@ -32,9 +41,12 @@ $$
 
 ### 软间隔 SVM
 
-​		软间隔支持向量机是为了解决线性不可分问题而设计的，它允许支持向量机在一些样本上不满足约束条件（被错误分类）。之所以如此定义，是因为在样本集中总是存在一些噪音点或者离群点，如果强制要求所有的样本点都满足硬间隔，可能会导致出现过拟合的问题，甚至会使决策边界发生变化。
+​		支持向量机在线性可分数据集中表现优秀，算法效率高且准确度好。但实际生活中的数据集往往是线性不可分的，并伴随有一定的噪声与空缺。 SVM 对于这部分异常数据是异常敏感的：如果支持向量的选择偏离了数据集的原始特征，则 SVM 的分类结果会出现极大的误差。
 
-​		我们引入如下的优化目标：
+​		因此，对于这部分问题，如果强制要求所有的样本点都满足硬间隔，可能会导致出现过拟合的问题，甚至会使决策边界发生变化。为了解决支持向量机的这一局限性，我们引入了软间隔支持向量机。
+
+​		软间隔支持向量机是为了解决线性不可分问题而设计的，它允许支持向量机在一些样本上不满足约束条件（被错误分类）。为此，我们引入如下的优化目标：
+
 $$
 \underset{w,b}{\min}\frac{1}{2}||w||^2+\gamma\sum_{i=1}^{m}\ell_{0/1}(y_i(w^Tx_i+b)-1)
 $$
@@ -42,7 +54,7 @@ $$
 $$
 l_{0/1}(z) \begin{cases}1, \quad if \ z<0;\\ 0, \quad otherwise.\end{cases}
 $$
-由于 $\ell_{0/1}$ 非凸、不连续，我们采用 Hinge 损失函数进行替代
+这个想法是自然的：在最小化超平面间隔的同时，我们尽可能让样本被错误分类的情况少发生。但由于 $\ell_{0/1}$ 非凸、不连续，本实验中我们采用 Hinge 损失函数进行替代
 $$
 \ell_{Hinge}(z)=max(0,1-z)
 $$
@@ -51,25 +63,38 @@ $$
 \underset{w,b}{\min}\frac{1}{2}||w||^2+\gamma\sum_{i=1}^{m}\ell_{Hinge}(y_i(w^Tx_i+b)-1)
 $$
 
+​		在本实验中，我们将采用软间隔支持向量机的两种不同求解方式，分别进行对应的实现。读者可以在后文中发现两种实现的异同之处。
 
+
+
+
+
+## 代码实现
 
 ### 基于梯度下降的软间隔 SVM 求解
 
-​		引入 $\hat{w}=\begin{pmatrix}w\\b\end{pmatrix},\ \hat{X}=\begin{pmatrix}X&1\end{pmatrix},\ \xi_i=\max(0, 1-y_i\hat{w}^T\hat{x}_i)$。同时，我们记 
+#### 理论推导
+
+​		假设数据集 X 大小满足 $X\in\mathbb{R}^{m\times n}$，我们引入 $\hat{w}=\begin{pmatrix}w\\b\end{pmatrix}\in\mathbb{R}^{(n+1)\times1},\ \hat{X}=\begin{pmatrix}X&1\end{pmatrix}\in\mathbb{R}^{m\times(n+1)}$，则 $\sum_{i=1}^my_i(w^Tx_i+b)=\sum_{i=1}^my_i(\hat{w}^T\hat{x_i})=y\cdot(\hat{X}\hat{w})$。接下来，我们引入 $\xi_i=\max(0, 1-y_i\hat{w}^T\hat{x}_i)$，并记 
 $$
 \hat{y}=(\hat{y_i}),\ where\ \hat{y_i}=\left\{ \begin{matrix}0,\text{ if } \xi_i=0\\y_i,\text{ if }\xi_i \ne0\end{matrix}\right.
 $$
-于是目标问题可化为
+于是目标问题可以化为
 $$
 \begin{align}
-L &= \frac{1}{2}w^Tw + \gamma\sum_{i=1}^m\xi_i\\
-\Rightarrow\nabla L&=w-\gamma \hat{X}^T\hat{y} \\
+L &= \frac{1}{2}\hat{w}^T\hat{w} + \gamma\sum_{i=1}^m\xi_i\\
+\Rightarrow\nabla L&=\hat{w}-\gamma \hat{X}^T\hat{y} \\
 w_{new}&=w_{old}-lr\times \nabla L
 \end{align}
 $$
 
+上面的矩阵梯度可能有一些复杂，读者在证明时应格外注意。
 
-核心代码如下
+
+
+#### 代码说明
+
+​		核心部分的训练代码如下，基本上是对照上面的公式进行转述。
 
 ```python
 m, n = X.shape
@@ -109,17 +134,61 @@ def array_find0(a:np.ndarray, b:np.ndarray) -> np.ndarray:
     return(func_(a, b))
 ```
 
+该函数可以对两个输入向量的每一维进行操作，并得到一个新的向量。
+
 
 
 
 
 ### 基于 SMO 的软间隔 SVM 对偶问题求解
 
-​		SMO 算法的基本思想是：如果所有变量的解都满足最优化问题的 KKT 条件，则已经得到该最优化问题的解。否则，我们可以选择两个变量，同时固定其他变量，仅针对这两个变量构建一个二次规划问题。这样，我们通过求解两个变量的二次规划问题，能让结果不断靠近原有凸二次规划问题的解，并且双变量二次规划问题有着对应的解析方法。
+> SMO 算法的原始论文可以参考 [这里](https://www.researchgate.net/publication/2624239_Sequential_Minimal_Optimization_A_Fast_Algorithm_for_Training_Support_Vector_Machines)。
+
+​		训练一个支持向量机需要解决一个非常大的二次规划优化（QP）问题。SMO 算法将这个大的 QP 问题分解为一系列可能的最小的 QP 问题，并进行求解。算法的基本思想是：如果所有变量的解都满足最优化问题的 KKT 条件，则已经得到该最优化问题的解。否则，我们可以选择两个变量，同时固定其他变量，仅针对这两个变量构建一个 QP 问题。这样，我们通过求解两个变量的 QP 问题，能让结果不断靠近原有 QP 问题的解，并且双变量 QP 问题有着对应的解析方法。
+
+​		那么应当如何选择两个变量、进行现有参数的更新呢？
+
+#### SVM 对偶问题
+
+​		回到我们的原始问题上：
+$$
+\min_{w,b}\frac{1}{2}||w||^2\\
+\text{s.t. }y_i(wx_i+b)\ge1,\ i = 1,2,\cdots,m
+$$
+采用拉格朗日乘子法，构造拉格朗日函数如下
+$$
+L(w,b,\alpha)=\frac{1}{2}||w||^2-\sum_{i=1}^m\alpha_i(y_i(wx_i+b)-1)
+$$
+其中 $\alpha_i\ge0$ 为拉格朗日乘子。令 $\frac{\partial L}{\partial w}=0,\ \frac{\partial L}{\partial b}=0 $，我们可以得到
+$$
+w=\sum_{i=1}^m\alpha_iy_ix_i\\
+\sum_{i=1}^m\alpha_iy_i=0
+$$
+代回拉格朗日函数，消去 w 和 b，我们得到
+$$
+L(w,b,\alpha)=-\frac{1}{2}\sum_{i=1}^m\sum_{j=1}^m\alpha_i\alpha_jy_iy_j(x_i^Tx_j)+\sum_{i=1}^m\alpha_i
+$$
+由此可知，SVM 问题的对偶问题为
+$$
+\max_{\alpha}\quad-\frac{1}{2}\sum_{i=1}^m\sum_{j=1}^m\alpha_i\alpha_jy_iy_j(x_i^Tx_j)+\sum_{i=1}^m\alpha_i\\
+\text{s.t. } \sum_{i=1}^m\alpha_iy_i=0\qquad\qquad\qquad\\
+\alpha_i\ge0,i=1,2,\cdots,m
+$$
+
+
+
 
 #### 启发式变量选择法
 
-​		SMO 算法在每个子问题中需要选择两个变量进行优化，并且其中至少一个变量是违反 KKT 条件的。为此我们可以先找出违反 KKT 条件最为 “严重” 的一系列变量，按照一定顺序存入 `index_1_list`。随后，对于 `index_1_list` 中的每个变量 $\alpha_i$，遍历所有 $\alpha_j,\ j\ne i$ 使得 $|E_1-E_2|$ 达到最大。如果不存在这样的 $\alpha_j$ ，则顺延至下一个 $\alpha_i$。直到 $\Delta\ell<tol$ 或所有 $\alpha_i$ 均满足 KKT 条件为止。
+​		SMO 算法在每个子问题中需要选择两个变量进行优化，并且其中至少一个变量是违反 KKT 条件的。本实验中， KKT 条件为
+$$
+\left\{\begin{matrix}
+\alpha_i\ge0\\
+y_i(w^Tx_i+b)-1\ge0\\
+\alpha_i(y_i(w^Tx_i+b)-1)\ge0
+\end{matrix}\right.
+$$
+​		我们可以先找出违反 KKT 条件最为 “严重” 的一系列变量，按照一定顺序存入 `index_1_list`。随后，对于 `index_1_list` 中的每个变量 $\alpha_i$，遍历所有 $\alpha_j,\ j\ne i$ 使得 $|E_1-E_2|$ 达到最大。如果不存在这样的 $\alpha_j$ ，则顺延至下一个 $\alpha_i$。直到 $\Delta\ell<tol$ 或所有 $\alpha_i$ 均满足 KKT 条件为止。
 
 ​		以下是寻找第一个变量的代码实现。我们优先寻找满足 $0<\alpha_i<\gamma$ 的违反 KKT 变量，为此将其违反程度 x10 之后存入暂存列表。这样一轮遍历之后，我们即可得到一个有序列表，对应着违反程度最为严重的一系列变量。
 
@@ -128,7 +197,8 @@ for i in range(m):
     alpha_i = self.alpha[i, :][0]
     err_i = self.err[i, :][0]
     if (0 < alpha_i < gamma and abs(err_i - 1) > epslion):
-        val = (abs(err_i) - epslion) * 10
+        val = (abs(err_i) - epslion) * 10	
+        # 注意这里，我们优先考虑这种情况，因此乘上了一个权重系数
         i_list.append((val, i))
     elif alpha_i == 0 and err_i < 1 - epslion:
         val = - err_i + 1 - epslion
@@ -146,7 +216,6 @@ for i in range(m):
 
 for i in self.err.tolist():
     err_list.append(i[0])
-    # print(err_list)
     for index, value in enumerate(err_list):
         err_dict.append((value, index))
         err_dict.sort(key=takefirst)
@@ -170,11 +239,11 @@ for i in self.err.tolist():
 
 
 
-
-
 #### 双变量二次规划问题求解
 
-​		不妨假定 $\alpha_1,\ \alpha_2$ 为目标变量，其余变量保持固定。并设问题的原始可行解为 $\alpha_1^{old},\ \alpha_2^{old}$， 双变量二次规划问题的最优解为 $\alpha_1^{new},\ \alpha_2^{new}$，且沿着约束方向未裁剪的 $\alpha_2$ 最优解为 $\alpha_2^{uncut-new}$。由于约束条件 $\sum_{i=1}^m\alpha_iy_i = 0$ 以及 $0 \le \alpha_i\le \gamma$ 的存在，我们应有 $low\le\alpha_2^{uncut-new}\le high$。其中
+> 该部分内容参考了 [这篇](https://zhuanlan.zhihu.com/p/32152421) 文章。
+
+​		不妨假定我们已经选定 $\alpha_1,\ \alpha_2$ 为目标变量，其余变量保持固定。并设问题的原始可行解为 $\alpha_1^{old},\ \alpha_2^{old}$， 双变量二次规划问题的最优解为 $\alpha_1^{new},\ \alpha_2^{new}$，且沿着约束方向未裁剪的 $\alpha_2$ 最优解为 $\alpha_2^{uncut-new}$。由于约束条件 $\sum_{i=1}^m\alpha_iy_i = 0$ 以及 $0 \le \alpha_i\le \gamma$ 的存在，我们应有 $low\le\alpha_2^{uncut-new}\le high$。其中
 $$
 low=\left\{\begin{matrix}\max(0,\ \alpha_2^{old}-\alpha_1^{old}),\quad y_1=y_2\\\max(0,\ \alpha_1^{old}+\alpha_2^{old}-\gamma),\quad y_1\ne y_2\end{matrix}\right.\\
 high=\left\{\begin{matrix}\min(\gamma,\ \gamma+\alpha_2^{old}-\alpha_1^{old}),\quad y_1=y_2\\\min(\gamma,\ \alpha_1^{old}+\alpha_2^{old}),\quad y_1\ne y_2\end{matrix}\right.
@@ -210,14 +279,14 @@ $$
 
 #### 为了提升效率所做的优化
 
-​		SVM2 类中引入了如下内容作为类的成员
+​		由于 SMO 算法需要对 $\alpha$ 进行大量的遍历与比较，难以进行矩阵化表述，所以针对代码的效率优化是很必要的。为了减少参数计算与传递，SVM2 类中引入了如下内容作为类的成员
 
 ```python
 def __init__(self, X:np.ndarray, y:np.ndarray):
     m, _ = X.shape
     self.X = X
     self.y = y
-    self.K = self.X @ self.X.T
+    self.K = self.X @ self.X.T	# 细节：提前计算了所有的 x_i^T*x_j
 
     self.alpha = np.zeros((m, 1))
     self.b = np.random.uniform(low=0.0, high=1.0, size=1)
@@ -225,7 +294,7 @@ def __init__(self, X:np.ndarray, y:np.ndarray):
     self._update_e()
 ```
 
-为了便于计算，我同时引入了如下的私有方法
+为了便于计算，我们引入了如下的私有方法
 
 ```python
  def _cut(self, low, high, a2_uncut)
@@ -243,7 +312,9 @@ def __init__(self, X:np.ndarray, y:np.ndarray):
     self.err = self.K @ alpha_y + self.b - self.y
 ```
 
-​		在更新 $\alpha$ 时，若 $|\alpha_{old}-\alpha_{new}|<\text{min_delta}$ 则不进行更新。在裁剪过程中，若 L > H 则不进行更新。这样可以保证了迭代的质量。
+得益于提前将数据存储为类的成员，所有的函数传参时仅需要传入变量的 index，最小化函数的空间占用与耗时。
+
+​		除此以外，在更新 $\alpha$ 时，若 $|\alpha_{old}-\alpha_{new}|<\text{min_delta}$ 则不进行更新；在裁剪过程中，若 L > H 则不进行更新。这样可以保证迭代的速度不至于过慢。
 
 
 
@@ -263,6 +334,8 @@ def __init__(self, X:np.ndarray, y:np.ndarray):
 
 <img src=".\pics\p2.png" alt="image-20221024181329695" style="zoom:80%;" />
 
+注意到损失函数曲线先是迅速下降，随后迅速上升，并逐渐在一个范围内波动。这是由于样本之中的部分误差数据引起的。为了保证训练效果，我们可以人为设置迭代次数的上界，让训练在反常上升之前即结束。
+
 
 
 #### 大样本单次验证
@@ -272,6 +345,8 @@ def __init__(self, X:np.ndarray, y:np.ndarray):
 参数：gamma = 0.005, lr = 0.002, tol=1e-4, max_times=100
 
 <img src="pics\p6.png" alt="image-20221024210710473" style="zoom: 80%;" />
+
+此时的损失曲线十分正常，训练也很快就收敛了。
 
 
 
@@ -299,7 +374,7 @@ def __init__(self, X:np.ndarray, y:np.ndarray):
 
 <img src=".\pics\p5.png" alt="image-20221024201943632" style="zoom:80%;" />
 
-
+损失函数值随迭代次数增加逐渐上升，符合我们的预期。然而 SMO 算法的迭代次数与训练时间都远远大于梯度下降算法。
 
 
 
@@ -327,7 +402,7 @@ def __init__(self, X:np.ndarray, y:np.ndarray):
 
 ​		可以发现，梯度下降的速度与 sklearn 基本差不多，而 SMO 算法在数据规模增大的时候会急速变慢，这是大量循环与判断导致的。在准确率方面，梯度下降的准确率相对弱于 SMO 和 sklearn，且随着样本规模增大，三者准确率都有所上升。
 
-
+​		SMO 算法的效率不尽人意。或许我们可以优化一下变量选择的策略，例如对 $\alpha_j$ 采用随机选择，或者限定 $\alpha_j$ 的选择次数等。本实验中不再进行调整。
 
 
 
@@ -358,10 +433,12 @@ def show(times, loss, color = '#4169E1', start=0, end=2000)
 def model_cmp(y_pre:np.ndarray, y_test:np.ndarray)
 # 准确率比较函数
 
-def model_accuracy_ave(model:str = '1', dim = 20, num = 10000, devide_rate = 0.7, total_time = 50)
+def model_accuracy_ave(model:str = '1', dim = 20, num = 10000, 
+                       devide_rate = 0.7, total_time = 50, ifsilent = True)
 # 单模型多次训练平均效果评价函数
 
-def model_accuracy_cmp(dim = 20, num = 10000, devide_rate = 0.7, total_time = 50)
+def model_accuracy_cmp(dim = 20, num = 10000, devide_rate = 0.7, 
+                       total_time = 50, ifsilent = True)
 # 多模型多次训练效果横向评价函数
 ```
 
