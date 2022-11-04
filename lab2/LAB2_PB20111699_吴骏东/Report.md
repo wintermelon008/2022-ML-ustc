@@ -14,7 +14,7 @@
 
 ​		支持向量机（support vector machines, SVM）所解决的是二分类目标中确定最大间隔超平面的问题。
 
-<img src="./pics/p1.png" alt="image-20221024165502163" style="zoom:50%;" />
+<img src=".\pics\p1.png" alt="image-20221024165502163" style="zoom:50%;" />
 
 ​		如上图所示，对于二分类样本集合 $D\in(R^n\times\{-1,1\})^m$ ，假设超平面能够将所有训练样本正确分类，即对于 $\forall (x_i,\ y_i)\in D$，有 $y_i(w^Tx_i+b)>0$。我们定义超平面关于样本点 $(x_i,\ y_i)$ 的几何间隔为
 $$
@@ -344,7 +344,7 @@ def __init__(self, X:np.ndarray, y:np.ndarray):
 
 参数：gamma = 0.005, lr = 0.002, tol=1e-4, max_times=100
 
-<img src="pics\p6.png" alt="image-20221024210710473" style="zoom: 80%;" />
+<img src=".\pics\p6.png" alt="image-20221024210710473" style="zoom: 80%;" />
 
 此时的损失曲线十分正常，训练也很快就收敛了。
 
@@ -354,7 +354,7 @@ def __init__(self, X:np.ndarray, y:np.ndarray):
 
 数据大小： $10000 \times 20$，重复次数： 100次。样本平均错标率为 0.036634，模型平均准确率为 0.9553700000000002，用时 45.7s。
 
-<img src="./pics/p3.png" alt="image-20221024192104308" style="zoom: 67%;" />
+<img src=".\pics\p3.png" alt="image-20221024192104308" style="zoom: 67%;" />
 
 
 
