@@ -4,7 +4,7 @@
 
 **2022.11.20**
 
-​		在本次的实验中，我们需要自主实现基于回归树的 XGBoost 模型。本文将从算法原理、代码实现、性能分析等方面展开。如果对于其中部分内容有疑问或者有其他改进意见，欢迎提出 issue 或直接联系作者。
+​		在本次的实验中，我们需要自主实现基于回归树的 XGBoost 模型。本文将从算法原理、代码实现、结果分析等方面展开。如果对于其中部分内容有疑问或者有其他改进意见，欢迎提出 issue 或直接联系作者。
 
 
 
@@ -51,7 +51,7 @@ $$
 Obj^{(t)}=∑_{i=1}^n[g_i f_t (x_i )+\frac12 h_i f_t^2 (x_i)]+penalty(f_t )
 $$
 
-### 
+
 
 ### 决策树（回归树）
 
@@ -131,6 +131,8 @@ class Node:
 ```
 
 考虑到 python 的语言特性，我们无需采用指针或额外的数据结构来进行空结点的判断，直接赋值为 -1 即可。
+
+
 
 #### 输出预测
 
@@ -224,7 +226,7 @@ return max_feature, max_f_value, max_gain, max_index1, max_index2
 
 ```python
 _index = np.where((self.X[node.index, col:col+1] <= f_value).all(axis=1))[0]
-index1 = np.array(node.index)[_index]
+index = np.array(node.index)[_index]
 ```
 
 ​		第一行确定了下标在 node.index 中的行（**当前结点所包含的样本**）的 col 列中所有下标（**当前结点包含的样本在当前特征的取值**）小于当前划分标准的行的下标（样本编号）。由于这里是在子集中进行的计算，我们需要将下标再映射回到结点包含样本的下标上，这也就是第二行的作用。
@@ -323,7 +325,6 @@ def fit(self, T, min_train_err,tree_parameters):
 
 - $R^2=1-\frac{ \sum_{i=1}^m(y_{test}^{(i)}-\hat y_{test}^{(i)})^2}{\sum_{i=1}^m(\bar y_{test}-\hat y_{test}^{(i)})^2}=1-\frac{MSE(\hat y_{test},y_{test})}{Var(y_{test})}\\ $，越大越好
 
-- 运行时间
 
 ```python
 def RMSE(self, pre:np.ndarray, val:np.ndarray):
@@ -398,7 +399,9 @@ parameters = {
 
 <img src="./pics/single_tree_RMSE.png" alt="image-20221119222155567" style="zoom: 80%;" />
 
-其中，横坐标为结点数目，纵坐标为 RMSE。
+<img src="./pics/single_tree_loss.png" alt="image-20221119222155567" style="zoom: 80%;" />
+
+RMSE 与 均方误差的训练曲线基本一致。
 
 
 
@@ -450,7 +453,7 @@ T = 35， min_err = 1e-4。
 
 <img src="./pics/XGBoost_err.png" alt="image-20221119224934749" style="zoom: 80%;" />
 
-其中，纵坐标为训练集均方误差。
+其中，纵坐标为训练集均方误差。R2 达到了 0.8+，与 Sklearn 所提供的库效果相当。
 
 ​		
 
