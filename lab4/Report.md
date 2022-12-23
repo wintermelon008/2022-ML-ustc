@@ -87,6 +87,8 @@ self.D = np.sqrt(np.abs(X2 @ one.T + one @ X2.T - 2 * self.X @ self.X.T))
 
 #### 计算 $\rho$ 与 $\delta$
 
+​		直接按照算法实现。
+
 ```python
 def calculate(self, dc = 1):
     self.rho = np.zeros((self.m, 1))
@@ -112,7 +114,7 @@ def calculate(self, dc = 1):
 
 #### 确定聚类中心
 
-​		根据决策图，确定属于决策中心的点的参数范围 $\rho_{min}$、$\delta_{min}$。随后将 $\rho\ge\rho_{min},\delta\ge\delta_{min}$ 的数据点标记为聚类中心点。
+​		根据决策图，确定属于决策中心的点的参数范围 $\rho_{min}$、$\delta_{min}$。随后将 $\rho\ge\rho_{min},\delta\ge\delta_{min}$ 的数据点标记为聚类中心点，将 $\rho<\rho_{min},\delta\ge\delta_{min}$ 的数据点标记为离群点。
 
 ```python
 def find_center(self, base_rho, base_delta):
@@ -175,6 +177,8 @@ score = sklm.davies_bouldin_score(data, model.label.flatten())
 print("DBI = {}".format(score))
 ```
 
+接下来，我们针对每一个模型，给出经过调参后的最优结果（即调整 $d_c$ 后所能得出的最佳 DBI）
+
 
 
 ### Aggregation
@@ -215,6 +219,20 @@ DBI = 0.3147059939103035
 
 
 
+### 与 K-means 的比较
+
+|   数据集    | k-means |   DPC   |
+| :---------: | :-----: | :-----: |
+| Aggregation | 0.69826 | 0.54613 |
+|     D31     | 0.54711 | 0.56572 |
+|     R15     | 0.31470 | 0.31470 |
+
+​		可以发现，在 Aggregation 数据集上， DPC 算法的效果明显优于 k-means，在其他数据集上二者效果基本相同。这主要是因为 Aggregation 数据集中样本点的分布情况并不均匀，形成的簇形状也不相同，对于 k-means 算法带来了一定的影响。
+
+
+
+
+
 ### 总结
 
-​		本次实验通过实现 DPC 算法，我对于聚类有了更深的认识。
+​		本次实验通过实现 DPC 算法，我对于聚类有了更深的认识。相比于传统 k-means，DPC 算法更为简洁，且不需要预先指定簇的数目。
