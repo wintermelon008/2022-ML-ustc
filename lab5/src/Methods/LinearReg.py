@@ -23,7 +23,6 @@ class LinearRegression:
     
     
     def save(self, filename = None):
-        
         if filename == None:
             t_str = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
             filename = "./model/Model_LinearReg" + "_" + t_str + ".dat"

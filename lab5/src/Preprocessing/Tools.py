@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import random as rd
+import seaborn as sns
 
 
 def random_FillMissingData(df: pd.DataFrame, random_seed: int = -1, if_debug = False) -> pd.DataFrame:
@@ -54,13 +55,45 @@ def Normalization(df: pd.DataFrame, if_debug = False) -> pd.DataFrame:
     '''
     
     _df = df.copy()
-    _df = _df.apply(lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))).round(8)
+    _df_ft = _df.iloc[:, :-1]
+    _df_lb = _df.iloc[:, -1:]
     
+    # print(_df_ft.shape)
+    
+    _df_ft = _df_ft.apply(lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))).round(8)
+    _df = pd.concat([_df_ft, _df_lb], axis=1)
     
     if if_debug == True:
         _df.to_csv("./debug/normalization.csv", index=False) 
     
     return _df
+
+
+
+
+def Drop_noise(df: pd.DataFrame, if_debug = False):
+    '''
+        删除超出 0.07345 sigma 范围的数据
+    '''
+    _df = df.copy()
+    df_describe = _df.describe()
+    
+    for column in df.columns:
+        if column == 'label':
+            break
+        mean = df_describe.loc['mean',column]
+        std = df_describe.loc['std',column]
+        minvalue = mean - 0.07345*std   
+        maxvalue = mean + 0.07345*std
+        _df = _df[_df[column] >= minvalue]
+        _df = _df[_df[column] <= maxvalue]
+        
+        
+    if if_debug == True:
+        _df.to_csv("./debug/drop_noise.csv", index=False) 
+        
+    return _df
+
 
 
 def random_Split_data(data: pd.DataFrame, rate = 0.75, random_seed: int = -1, if_debug = False):
@@ -103,3 +136,46 @@ def random_Split_data(data: pd.DataFrame, rate = 0.75, random_seed: int = -1, if
 
 
 
+def Find_useless_feature(data: pd.DataFrame):
+    """
+        从数据集中删除贡献不明显的特征
+        我们规定，如果某特征在所有类别中分布都类似，则视作无用特征
+
+    Args:
+        data (pd.DataFrame): _description_
+    """
+    
+    sub_data_0 = data.query('label==0')
+    sub_data_1 = data.query('label==1')
+    sub_data_2 = data.query('label==2')
+    sub_data_3 = data.query('label==3')
+    
+    for i in ['label_0', 'label_1']:
+        fig = sns.distplot(sub_data_0[i])
+        fig_save = fig.get_figure()
+        fig_save.savefig('{}.png'.format(i),dpi=300)
+        fig_save.clear()
+
+
+    
+    
+    
+def Delete_feature(data: pd.DataFrame):
+    '''
+        删除符合特定条件的特征
+    '''
+    
+    
+def Find_drop_feature(X_old: np.ndarray, X_new: np.ndarray):
+    _, n_old = X_old.shape
+    _, n_new = X_new.shape
+    drop = []
+
+    j = 0
+    for i in range(0, n_old):
+        if X_old[0, i] != X_new[0, j]:
+            drop.append(i)
+        else:
+            j += 1
+    return drop
+            

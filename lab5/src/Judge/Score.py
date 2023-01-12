@@ -17,6 +17,9 @@ def Labelize(pre: np.ndarray) -> list:
             labelized_pre: list
                 标签化后的预测结果	
     '''
+    if isinstance(pre, list):
+        return pre
+    
     m, _ = pre.shape
     result = []
     
