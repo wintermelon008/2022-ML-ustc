@@ -2,6 +2,7 @@
 # 调用 skl 的模型
 
 from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree
 import pickle
 import time
 
@@ -43,6 +44,10 @@ class DecisionTree:
         self._set_parameters(default_parameters)
         
         self.tree.fit(self.X, self.y)
+        
+        if self.if_silent == 0:
+            text_representation = tree.export_text(self.tree)
+            print(text_representation)
         
         
     def predict(self, X):

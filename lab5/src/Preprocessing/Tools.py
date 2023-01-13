@@ -150,10 +150,37 @@ def Find_useless_feature(data: pd.DataFrame):
     sub_data_2 = data.query('label==2')
     sub_data_3 = data.query('label==3')
     
-    for i in ['label_0', 'label_1']:
-        fig = sns.distplot(sub_data_0[i])
+    
+    for i in range(0, 120):
+        fe = "feature_" + str(i)
+        fig = sns.distplot(sub_data_0[fe])
         fig_save = fig.get_figure()
-        fig_save.savefig('{}.png'.format(i),dpi=300)
+        name = "./feature_fig/" + fe + "_l0.png"
+        fig_save.savefig(name, dpi=300)
+        fig_save.clear()
+    
+    for i in range(0, 120):
+        fe = "feature_" + str(i)
+        fig = sns.distplot(sub_data_1[fe])
+        fig_save = fig.get_figure()
+        name = "./feature_fig/" + fe + "_l1.png"
+        fig_save.savefig(name, dpi=300)
+        fig_save.clear()
+    
+    for i in range(0, 120):
+        fe = "feature_" + str(i)
+        fig = sns.distplot(sub_data_2[fe])
+        fig_save = fig.get_figure()
+        name = "./feature_fig/" + fe + "_l2.png"
+        fig_save.savefig(name, dpi=300)
+        fig_save.clear()
+        
+    for i in range(0, 120):
+        fe = "feature_" + str(i)
+        fig = sns.distplot(sub_data_3[fe])
+        fig_save = fig.get_figure()
+        name = "./feature_fig/" + fe + "_l3.png"
+        fig_save.savefig(name, dpi=300)
         fig_save.clear()
 
 
@@ -164,6 +191,20 @@ def Delete_feature(data: pd.DataFrame):
     '''
         删除符合特定条件的特征
     '''
+    
+    drop_f = [
+        'feature_2', 'feature_12',
+        'feature_15', 'feature_16',
+        'feature_20', 'feature_31',
+        'feature_32', 'feature_55',
+        'feature_75', 'feature_76',
+        'feature_77', 'feature_85',
+        'feature_87', 'feature_88',
+        'feature_102', 'feature_113'
+    ]
+    
+    data_new = data.drop(drop_f, axis=1)
+    return data_new
     
     
 def Find_drop_feature(X_old: np.ndarray, X_new: np.ndarray):
