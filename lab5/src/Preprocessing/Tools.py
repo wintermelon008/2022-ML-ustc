@@ -135,6 +135,39 @@ def random_Split_data(data: pd.DataFrame, rate = 0.75, random_seed: int = -1, if
     return X_train, y_train, X_test, y_test
 
 
+def random_Split_Data_Label(data: pd.DataFrame, labels = [], rate = 0.75, random_seed: int = -1, if_debug = False):
+    if labels == []:
+        labels = [0, 1, 2, 3]
+        
+    _, n = data.shape
+        
+    X_train = np.empty(shape=[0, n-1])
+    y_train = np.empty(shape=[0, 1])
+    X_test = np.empty(shape=[0, n-1])
+    y_test = np.empty(shape=[0, 1])
+    
+    for label in labels:
+        sub_data = data.query('label==' + str(label))
+        sub_X_train, sub_y_train, sub_X_test, sub_y_test = random_Split_data(sub_data, rate, random_seed, if_debug)
+        X_train = np.vstack((X_train, sub_X_train))
+        y_train = np.vstack((y_train, sub_y_train))
+        X_test = np.vstack((X_test, sub_X_test))
+        y_test = np.vstack((y_test, sub_y_test))
+        
+    train = np.hstack((X_train, y_train))
+    test = np.hstack((X_test, y_test))
+   
+    np.random.shuffle(train)
+    np.random.shuffle(test)
+    
+    X_train = train[:, :-1]
+    y_train = train[:, -1:]
+    X_test = test[:, :-1]
+    y_test = test[:, -1:]
+    return X_train, y_train, X_test, y_test
+        
+        
+        
 
 def Find_useless_feature(data: pd.DataFrame):
     """
@@ -203,7 +236,19 @@ def Delete_feature(data: pd.DataFrame):
         'feature_102', 'feature_113'
     ]
     
-    data_new = data.drop(drop_f, axis=1)
+    leave_f = [
+        'feature_9', 'feature_35',
+        'feature_43', 'feature_48',
+        'feature_67', 'feature_92',
+        'feature_98', 'feature_99',
+        'feature_100', 'feature_101',
+        'feature_106', 'feature_114',
+        'label'
+    ]
+    
+    data_new = data[leave_f]
+    
+    # data_new = data.drop(drop_f, axis=1)
     return data_new
     
     

@@ -35,6 +35,20 @@ class SupportVectorMachine:
         self.y = y
         self.m, self.n = self.X.shape 
         self.w = np.zeros((self.n + 1, 1))
+        
+        
+        unique, count=np.unique(self.y, return_counts=True)
+        data_count = dict(zip(unique, count))
+        
+        keys = []
+        for key in data_count:
+            keys.append(key)
+                
+        self.neg = keys[0]
+        self.pos = keys[1]
+        self.y[self.y == self.neg] = -1
+        self.y[self.y == self.pos] = 1
+
 
     def fit(self, gamma=0.25, lr=0.002, tol=1e-4, max_times=500, ifsilent=True):
         """
@@ -114,7 +128,7 @@ class SupportVectorMachine:
         ans = []
         for i in range(m):
             if temp[i] > 0:
-                ans.append(1)
+                ans.append(self.pos)
             else:
-                ans.append(-1)
+                ans.append(self.neg)
         return np.array(ans).reshape(-1, 1)
