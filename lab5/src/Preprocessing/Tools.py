@@ -246,6 +246,20 @@ def Delete_feature(data: pd.DataFrame):
         'label'
     ]
     
+    # leave_f = [
+    #     'feature_8', 'feature_9', 
+    #     'feature_17',
+    #     'feature_21', 'feature_23',
+    #     'feature_35', 'feature_41',
+    #     'feature_43', 'feature_47',
+    #     'feature_48', 'feature_64',
+    #     'feature_67', 'feature_92',
+    #     'feature_98', 'feature_99',
+    #     'feature_100', 'feature_101',
+    #     'feature_106', 'feature_114',
+    #     'label'
+    # ]
+    
     data_new = data[leave_f]
     
     # data_new = data.drop(drop_f, axis=1)
