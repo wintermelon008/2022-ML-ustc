@@ -71,7 +71,7 @@ def Normalization(df: pd.DataFrame, if_debug = False) -> pd.DataFrame:
 
 
 
-def Drop_noise(df: pd.DataFrame, if_debug = False):
+def Drop_noise(df: pd.DataFrame, k = 0.07345, if_debug = False):
     '''
         删除超出 0.07345 sigma 范围的数据
     '''
@@ -83,8 +83,8 @@ def Drop_noise(df: pd.DataFrame, if_debug = False):
             break
         mean = df_describe.loc['mean',column]
         std = df_describe.loc['std',column]
-        minvalue = mean - 0.07345*std   
-        maxvalue = mean + 0.07345*std
+        minvalue = mean - k*std   
+        maxvalue = mean + k*std
         _df = _df[_df[column] >= minvalue]
         _df = _df[_df[column] <= maxvalue]
         
@@ -94,6 +94,47 @@ def Drop_noise(df: pd.DataFrame, if_debug = False):
         
     return _df
 
+
+def Drop_noise_data(df: pd.DataFrame, if_debug = False, iter_times = 50, min_delta = 1):
+    
+    _df = df.copy()
+    
+    i = 0
+    old_mean = []
+    jump_list = ['label']
+    for _ in range(0, len(df.columns)-1):
+        old_mean.append(1e10)
+    
+    while i < iter_times:
+        df_describe = _df.describe()
+        
+        for j in range(0, len(df.columns)-1):
+            column = df.columns[j]
+            if column in jump_list:
+                continue
+            
+            mean = df_describe.loc['mean',column]
+            std = df_describe.loc['std',column]
+            minvalue = mean - 3*std   
+            maxvalue = mean + 3*std
+            _df = _df[_df[column] >= minvalue]
+            _df = _df[_df[column] <= maxvalue]
+            
+            if abs(old_mean[j] - mean) < min_delta:
+                i = iter_times
+                jump_list.append(column)
+                continue
+        
+            old_mean[j] = mean
+        
+        i += 1
+        
+    
+        
+    if if_debug == True:
+        _df.to_csv("./debug/drop_noise_data.csv", index=False) 
+        
+    return _df
 
 
 def random_Split_data(data: pd.DataFrame, rate = 0.75, random_seed: int = -1, if_debug = False):
