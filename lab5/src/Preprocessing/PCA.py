@@ -41,14 +41,6 @@ class PCA(object):
         c_df_sort = self.get_feature()
         return c_df_sort.values[:, 0]
         
-    def paint_varience_(self):
-        # explained_variance_ = self.explained_varience_()
-        # plt.figure()
-        # plt.plot(explained_variance_, 'k')
-        # plt.xlabel('n_components', fontsize=16)
-        # plt.ylabel('explained_variance_', fontsize=16)
-        # plt.show()
-        pass
               
     def reduce_dimension(self):
         """指定维度降维和根据方差贡献率自动降维"""

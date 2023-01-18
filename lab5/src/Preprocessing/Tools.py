@@ -115,8 +115,8 @@ def Drop_noise_data(df: pd.DataFrame, if_debug = False, iter_times = 50, min_del
             
             mean = df_describe.loc['mean',column]
             std = df_describe.loc['std',column]
-            minvalue = mean - 3*std   
-            maxvalue = mean + 3*std
+            minvalue = mean - 4*std   
+            maxvalue = mean + 4*std
             _df = _df[_df[column] >= minvalue]
             _df = _df[_df[column] <= maxvalue]
             
@@ -135,6 +135,28 @@ def Drop_noise_data(df: pd.DataFrame, if_debug = False, iter_times = 50, min_del
         _df.to_csv("./debug/drop_noise_data.csv", index=False) 
         
     return _df
+
+
+def Fix_Noise_data(df: pd.DataFrame, pure_data: pd.DataFrame, if_debug=False):
+    df_describe = pure_data.describe()
+    _df = df.copy()
+    
+    for column in _df.columns:
+        if column == 'label':
+            continue
+        mean = df_describe.loc['mean',column]
+        std = df_describe.loc['std',column]
+        
+        _df.loc[_df[column] < mean - 3 * std, column] = mean
+        _df.loc[_df[column] > mean + 3 * std, column] = mean
+        _df.loc[_df[column] < mean - 1 * std, column] = mean - std
+        _df.loc[_df[column] > mean + 1 * std, column] = mean + std
+        
+    if if_debug == True:
+        _df.to_csv("./debug/fix_noise_data.csv", index=False) 
+        
+    return _df
+
 
 
 def random_Split_data(data: pd.DataFrame, rate = 0.75, random_seed: int = -1, if_debug = False):
