@@ -164,7 +164,7 @@ def Fix_Noise_data(df: pd.DataFrame, pure_data: pd.DataFrame, if_debug=False):
 
 ​		在与其他同学的交流过程中，我们又提出了一种新的数据识别方式：考虑到异常点往往与真实数据点差距较大，而异常点本身彼此差距相对较小。可以通过计算各样本点在特征上的距离增量来找到这一区分异常点与真实点的阈值。这是从 Lab4 中聚类的异常点识别机制改进而来的一种思路，距离增量的最大值点往往对应着样本数据中的离群点，而距离增量可以通过各样本数据与特征中位数的差值得到。这是一种很好的思路，但经过测试，采用这样的方法进行的数据清理带来的准确率提升不够理想。可能的原因一方面是本次实验数据集异常数据的分布并不符合我们的预期假设，另一方面可能是因为原始数据本身存在着较大的差异分布，在清洗过程剔除了较多的正常数据。故最终我们没有采用这一方案。
 
-​		在本次实验中，我们采取三种方式进行异常数据的清理：
+​		在本次实验中，我们采取以下三种方式进行异常数据的清理：
 
 1. 单次删除，不保留异常数据
 2. 迭代删除，不保留异常数据
@@ -248,7 +248,7 @@ X_train = np.delete(X_train, drop_index, axis=1)
 X_test = np.delete(X_test, drop_index, axis=1)
 ```
 
-但是经过测试，降维后的特征相比原始 120 特征数据并没有带来显著的准确率提升。自然这与我们选择线性回归模型有着很大的关系。因为 RFE 的结果是与模型本身高度关联的。若是模型的学习能力较弱，则也无法通过特征选择有效提升准确率。我们希望得到一种相对通用的特征选择方案，因此 RFE 在本次实验中也很难有用武之地。
+经过测试，降维后的特征相比原始 120 特征数据并没有带来显著的准确率提升。自然这与我们选择线性回归模型有着很大的关系。因为 RFE 的结果是与模型本身高度关联的。若是模型的学习能力较弱，则也无法通过特征选择有效提升准确率。我们希望得到一种相对通用的特征选择方案，因此 RFE 在本次实验中也很难有用武之地。
 
 ​		那么，我们应当如何得到有效的特征呢？或许可以采用如下的策略：使用决策树对全特征数据进行分类，并统计决策路径与权重。在多次重复实验后，得到各个特征的初始权重排序关系。从中选择排名靠前的特征，进行重复训练。直到最终的特征权重分布不再出现明显变化。当然，用于全特征计算的决策树应当具有稳定的弱分类能力。如下所示，采用的决策树分类准确率稳定在 0.26+，得到了一系列决策路径。
 
@@ -814,7 +814,35 @@ class NeuralNetwork:
 
 ​		随着隐藏层结构的复杂化，模型的平均准确率逐步下降，这表明神经网络模型在一定程度上出现了过拟合。而不管采用何种结构，得到的模型平均准确率始终低于 0.26。事实上在训练的过程中出现了 0.26 甚至 0.27 准确率的模型，但仅为极少数。相对应地，也出现了准确率仅有 0.23 的模型。神经网络模型的高度不稳定性使得我们无法以此构造出值得信赖的分类器。
 
+#### Keras
 
+```python
+X_train, y_train, X_test, y_test = M_TOOL.random_Split_Data_Label(df)
+
+def deep_model(feature_dim,label_dim):
+    from keras.models import Sequential
+    from keras.layers import Dense
+    model = Sequential()
+    print("create model. feature_dim ={}, label_dim ={}".format(feature_dim, label_dim))
+    model.add(Dense(5, activation='relu', input_dim=feature_dim))
+    model.add(Dense(10, activation='relu'))
+    model.add(Dense(5, activation='relu'))
+    model.add(Dense(label_dim, activation='sigmoid'))
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    return model
+
+
+def train_deep(X_train,y_train,X_test,y_test):
+    feature_dim = 12
+    label_dim = 1
+    model = deep_model(feature_dim,label_dim)
+    model.summary()
+    model.fit(X_train,y_train,batch_size=16, epochs=5,validation_data=(X_test,y_test))
+    
+train_deep(X_train,y_train,X_test,y_test)
+```
+
+​		近年来较为火热的 Keras 作为一个高级神经网络 APl，自然也提供了基础神经网络的通用接口。与 skl 提供的神经网络模型进行对比，二者在本实验的数据集上并没有表现出显著的差异。但在训练与收敛的速度上 Keras 均更占优势。其所实现的可视化训练过程与更为简单的接口为我们的实验过程提供了良好的体验。
 
 
 
@@ -897,3 +925,5 @@ class XGBoost(object):
 ​		针对不同的模型所展现出来的不同效果，我们需要从更为本质的视角取看待。不同的模型都有着其适用的场合，而参数的调整也不能凭借自己的主观意愿。我们必须要清楚调整这个参数可能为模型带来什么，或者在当前数据集的条件下这个参数是否有着显著的提升意义。无脑试错仅仅增加了实验的时间成本。
 
 ​		回到实验结果上来，目前实现的最佳效果为方法 2 决策树的 0.295。但是该模型并没有处理原始数据的异常情况，而是进行了简单的丢弃处理。理论上来说，这样通过纯净数据集构建的测试集是不合适的。我们不能保证最终测试的数据集在经过这样的数据处理后会与纯净数据集效果相近。而方法 3 选择的对原始数据进行修正才是最为合适的方案。尽管其准确率较低，但是最科学，也是最严谨的选择。
+
+​		最后，回顾本次实验的历程，有过不甘，但也释然。不管怎样，一段旅程就此告一段落。祝大家新年快乐！

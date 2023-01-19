@@ -2,6 +2,8 @@
 # 调用了 SKL 库的内容
 
 from sklearn.neural_network import MLPClassifier
+import pickle
+import time
 
 class NeuralNetwork:
     
@@ -47,3 +49,10 @@ class NeuralNetwork:
         
     def predict(self, X):
         return self.model.predict(X)
+    
+    def save(self, filename = None):
+        if filename == None:
+            t_str = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
+            filename = "./model/Model_NN" + "_" + t_str + ".dat"
+            
+        pickle.dump(self, open(filename, "wb"))
