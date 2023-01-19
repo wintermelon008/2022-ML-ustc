@@ -115,8 +115,8 @@ def Drop_noise_data(df: pd.DataFrame, if_debug = False, iter_times = 50, min_del
             
             mean = df_describe.loc['mean',column]
             std = df_describe.loc['std',column]
-            minvalue = mean - 4*std   
-            maxvalue = mean + 4*std
+            minvalue = mean - 3.5 * std   
+            maxvalue = mean + 3.5 * std
             _df = _df[_df[column] >= minvalue]
             _df = _df[_df[column] <= maxvalue]
             
@@ -147,10 +147,10 @@ def Fix_Noise_data(df: pd.DataFrame, pure_data: pd.DataFrame, if_debug=False):
         mean = df_describe.loc['mean',column]
         std = df_describe.loc['std',column]
         
-        _df.loc[_df[column] < mean - 3 * std, column] = mean
-        _df.loc[_df[column] > mean + 3 * std, column] = mean
-        _df.loc[_df[column] < mean - 1 * std, column] = mean - std
-        _df.loc[_df[column] > mean + 1 * std, column] = mean + std
+        _df.loc[_df[column] < mean - 3.5 * std, column] = mean
+        _df.loc[_df[column] > mean + 3.5 * std, column] = mean
+        _df.loc[_df[column] < mean - 1 * std, column] = mean - 1 * std
+        _df.loc[_df[column] > mean + 1 * std, column] = mean + 1 * std
         
     if if_debug == True:
         _df.to_csv("./debug/fix_noise_data.csv", index=False) 

@@ -5,7 +5,7 @@ import numpy as np
 
 
 
-def Labelize(pre: np.ndarray) -> list:
+def Labelize(pre: np.ndarray, max = 3.5, min = -0.5) -> list:
     '''
         标签化函数：将连续结果离散化
         ---------------
@@ -22,13 +22,14 @@ def Labelize(pre: np.ndarray) -> list:
     
     m, _ = pre.shape
     result = []
+    gap = (max - min) / 4
     
     for i in range(m):
-        if pre[i][0] >= 2.5:
+        if pre[i][0] >= max - gap:
             result.append(3)
-        elif pre[i][0] >= 1.5:
+        elif pre[i][0] >= max - 2 * gap:
             result.append(2)
-        elif pre[i][0] >= 0.5:
+        elif pre[i][0] >= min + gap:
             result.append(1)
         else:
             result.append(0)
@@ -36,7 +37,7 @@ def Labelize(pre: np.ndarray) -> list:
     return result
 
 
-def Err_label(y_pre: (list | np.ndarray), y_real: np.ndarray):
+def Err_label(y_pre: (list | np.ndarray), y_real: np.ndarray, max = 3.5, min = -0.5):
     '''
         分类错误率计算函数
         ---------------
@@ -53,7 +54,7 @@ def Err_label(y_pre: (list | np.ndarray), y_real: np.ndarray):
     '''
     
     if isinstance(y_pre, np.ndarray):
-        y_pre = Labelize(y_pre)
+        y_pre = Labelize(y_pre, max, min)
     
     if isinstance(y_real, list):
         y_real = np.array(y_real).reshape(-1, 1)
@@ -68,7 +69,7 @@ def Err_label(y_pre: (list | np.ndarray), y_real: np.ndarray):
     return score * 1.0 / m
 
 
-def Accuracy(y_pre: (list | np.ndarray), y_real: np.ndarray):
+def Accuracy(y_pre: (list | np.ndarray), y_real: np.ndarray, max = 3.5, min = -0.5):
     '''
         分类精度计算函数
         ---------------
@@ -83,4 +84,4 @@ def Accuracy(y_pre: (list | np.ndarray), y_real: np.ndarray):
             score: float
                 分类精度	
     '''
-    return 1 - Err_label(y_pre, y_real)
+    return 1 - Err_label(y_pre, y_real, max, min)
